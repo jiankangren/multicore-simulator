@@ -10,14 +10,13 @@ class bus:
     
     
     instance = None
-
+    def __init__(self):
+        if(not bus.instance):
+            bus.instance = bus.__bus()
+    
     def __getattr__(self, name):
         return getattr(self.instance, name)
 
-    def __init__(self):
-        if(self.instance is None):
-            self.instance = bus.__bus()
-    
-
             
-    
+x = bus()
+
