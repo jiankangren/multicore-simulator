@@ -15,12 +15,14 @@ class core:
         def __init__(self, coreID, clk, ctrCache):
             self.ID = coreID
             self.clock = clk
-            self.processTime = 10
+            self.processTime = 1
             self.ctrCache = ctrCache
+            self.standby = threading.Condition()
+            self.ctrCache.add_pause(self.standby)
             threading.Thread.__init__(self)
 
         def process(self):
-            print(self.ID+'>>processing')
+            print(self.ID+'>> Processing')
             sleep(self.processTime)
        
 
@@ -30,30 +32,37 @@ class core:
                 if(count != self.clock.countCicle ):
                     count = self.clock.countCicle
                     instr = core.generateInstruction()
-                    if (instr == 'read'):
-                        print(self.ID+'>>reading')
 
-                    elif (instr == 'write'):
-                        print(self.ID+'>>writing')
+                    if(instr in ['read', 'write']):
+                        with self.standby:
+                            if (instr == 'read'):
+                                dir = random.randrange(16)
+                                print(self.ID+'>> reading to', dir)
+                                self.ctrCache.read(dir)
 
-                    elif (instr == core.isa[2]):
+                            elif (instr == 'write'):
+                                dir = random.randrange(16)
+                                print(self.ID+'>> writing to', dir)
+                                self.ctrCache.write(dir, self.ID)
+                            
+                            self.standby.wait()
+
+                    elif (instr == 'process'):
                         self.process()
                 
                 else:
-                    sleep(1)
-
-
+                    sleep(0.5)
 
 
     def __init__(self, coreID, bus, clock):
-        myBus = connexion.bus()
-        myCache = cache.cache()
-        controller = cacheController.controller(myBus, myCache)
-        self.processor = core.processor(coreID, clock, controller)
+        self.ID = coreID
+        self.myBus = bus
+        self.myCache = cache.cache()
+        self.controller = cacheController.controller(self.myCache, self.myBus)
+        self.myBus.add_ctrl(self.controller)
+        self.processor = core.processor(coreID, clock, self.controller)
         self.processor.start()
         
     @staticmethod
     def generateInstruction():
             return core.isa[random.randrange(3)]
-    
-
