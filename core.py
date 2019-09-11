@@ -8,10 +8,9 @@ import random
 
 
 class core:
-    isa = ['read','write','process']
-
+    isa = ['read','process','write']
     class processor (threading.Thread):
-
+        state = 'AWAKE'
         def __init__(self, coreID, clk, ctrCache):
             self.ID = coreID
             self.clock = clk
@@ -22,7 +21,6 @@ class core:
             threading.Thread.__init__(self)
 
         def process(self):
-            print(self.ID+'>> Processing')
             sleep(self.processTime)
        
 
@@ -32,22 +30,21 @@ class core:
                 if(count != self.clock.countCicle ):
                     count = self.clock.countCicle
                     instr = core.generateInstruction()
-
+                    command = """### NEW INSTRUCTION ###\n\tCORE ID:    {}\n\tTYPE:\t{}"""\
+                    .format(self.ID, instr)
                     if(instr in ['read', 'write']):
-                        with self.standby:
-                            if (instr == 'read'):
-                                dir = random.randrange(16)
-                                print(self.ID+'>> reading to', dir)
-                                self.ctrCache.read(dir)
+                        dir = random.randrange(16)
+                        command+="\n\tDIR:\t{}".format(dir)
+                        print(command)
+                        if (instr == 'read'):
+                            self.ctrCache.read(dir)
 
-                            elif (instr == 'write'):
-                                dir = random.randrange(16)
-                                print(self.ID+'>> writing to', dir)
-                                self.ctrCache.write(dir, self.ID)
+                        elif (instr == 'write'):
+                            self.ctrCache.write(dir, self.ID)
                             
-                            self.standby.wait()
 
                     elif (instr == 'process'):
+                        print(command)
                         self.process()
                 
                 else:
@@ -62,7 +59,6 @@ class core:
         self.myBus.add_ctrl(self.controller)
         self.processor = core.processor(coreID, clock, self.controller)
         self.processor.start()
-        
     @staticmethod
     def generateInstruction():
-            return core.isa[random.randrange(3)]
+            return core.isa[random.randrange(3)] ### SHOULD BE 3

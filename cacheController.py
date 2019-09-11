@@ -3,9 +3,7 @@ class controller:
     hitRate = 0
     missRate = 0
     thread_pause = None
-
-
-
+    
     def __init__(self, _cache, _bus):
         self.cache = _cache
         self.cachesize = _cache.size
@@ -17,7 +15,7 @@ class controller:
         ### Can be replaced with a big if module
         cachedir = dir
         tag = 0
-        while (dir > self.cachesize) :
+        while (cachedir >= self.cachesize) :
             cachedir -= self.cachesize 
             tag += 1
         return cachedir, tag
@@ -28,35 +26,42 @@ class controller:
 
     def read(self, dir):
         cachedir,tag = self.map_dir(dir)
-        
         ### CHECK IF DATA IS IN CACHE
         cacheTag = self.cache.get_tag(cachedir)
         validbit = self.cache.get_valid(cachedir)
         miss = False
         if(validbit == 'invalid'):
             miss = True
-            ### ASK BUS FOR THE DATA 
-            ### CACHE DATA
-
+         
         if(validbit == 'shared'):
             if(cacheTag != tag):
                 miss = True
-                ### ASK BUS FOR DATA
-                ### CACHE DATA
-        
+                
         if(validbit == 'modified'):
             if(cacheTag != tag):
                 miss = True
                 ### STORE DATA AT MEMORY
                 data = self.cache.read(cachedir)
-                mem_dir = dir+self.cachesize if tag else dir                
-                self.bus.write_back(mem_dir, data)
-                ### ASK FOR NEW DATA
-                self.bus.request_read(self.thread_pause, dir)
-                ### CACHE DATA
-
+                ### WRITE BACK THE DATA
+                self.bus.write_back(dir, data)
+        
+        ### IF THERE IS A MISS
+        ### ASK BUS AND STORE IN CACHE
+        
         if(miss):
+            print("MISS READ")
             self.missRate += 1
+            with self.thread_pause:
+                ### ASK BUS FOR THE DATA 
+                self.bus.request_read(self.thread_pause, dir)        
+                print('SLEEP')
+                self.thread_pause.wait()
+                print('AWAKE')
+                
+            ### CACHE DATA
+            readed_data = self.bus.data
+            self.cache.write(cachedir, 'shared', tag, readed_data)
+
         else:
             self.hitRate += 1
         
@@ -75,6 +80,9 @@ class controller:
                 ### SAVE MISS
                 hit = False 
                 ### SAVE DATA IN MEMORY
+                data = self.cache.read(cachedir)
+                ### WRITE BACK THE DATA
+                self.bus.write_back(dir, data)
                 ### CALL FN()
         if(hit):
             self.hitRate += 1

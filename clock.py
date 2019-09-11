@@ -16,6 +16,6 @@ class clock (threading.Thread):
                 self.cicle = not self.cicle
                 self.countCicle += 1
                 sleep(self.timeCicle)
-                print('cicle: {}'.format(self.cicle))
+                #print('cicle: {}'.format(self.cicle))
 
 

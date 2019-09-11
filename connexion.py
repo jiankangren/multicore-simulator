@@ -62,14 +62,17 @@ class bus:
             while(1):
                 if(self.priorityQ.empty()):
                     if(not self.requestQ.empty()):
+                        #print("QUEUE MEMORY OPERATIONS SIZE:{}".format(self.requestQ.qsize()))
                         condi, fn, args = self.requestQ.get()
                         with condi:
                             fn(*args)
                             condi.notify()
+                            
                     else:
                         ### IF there is no READ/WRITE OPERATION
                         sleep(0.5)
                 else:
+                    #print("QUEUE PRIORITY MEMORY OPERATIONS SIZE:{}".format(self.priorityQ.qsize()))
                     fn, args = self.priorityQ.get()
                     fn(*args)
                
