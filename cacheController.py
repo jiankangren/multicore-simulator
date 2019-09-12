@@ -4,10 +4,11 @@ class controller:
     missRate = 0
     thread_pause = None
     
-    def __init__(self, _cache, _bus):
+    def __init__(self, _cache, _bus, _state):
         self.cache = _cache
         self.cachesize = _cache.size
         self.bus = _bus
+        self.core_state = _state
     
     def map_dir(self,dir):
         ### Find the tag and cache address
@@ -53,16 +54,18 @@ class controller:
             self.missRate += 1
             with self.thread_pause:
                 ### ASK BUS FOR THE DATA 
-                self.bus.request_read(self.thread_pause, dir)        
-                print('SLEEP')
+                self.bus.request_read(self.thread_pause, dir) 
+                ### SLEEPS the core
+                self.core_state('SLEEP')
                 self.thread_pause.wait()
-                print('AWAKE')
+                self.core_state ('AWAKE')
                 
             ### CACHE DATA
             readed_data = self.bus.data
             self.cache.write(cachedir, 'shared', tag, readed_data)
 
         else:
+            print("HIT READ")
             self.hitRate += 1
         
         return self.cache.read(cachedir)
@@ -74,6 +77,10 @@ class controller:
         cacheTag = self.cache.get_tag(cachedir)
         validbit = self.cache.get_valid(cachedir)
         ### 
+        print("WRITE OPERATION")
+        print("CACHE DIR:{} TAG:{}".format(cachedir, tag))
+        print("CACHE TAG:{} VALID BIT:{}".format(cacheTag, validbit))
+        
         hit = True
         if(validbit == 'modified'):
             if(cacheTag != tag):
@@ -85,6 +92,7 @@ class controller:
                 self.bus.write_back(dir, data)
                 ### CALL FN()
         if(hit):
+            print("HIT WRITE")
             self.hitRate += 1
         else:
             self.missRate += 1

@@ -9,12 +9,14 @@ import random
 
 class core:
     isa = ['read','process','write']
+    state = "AWAKE"
+    
     class processor (threading.Thread):
-        state = 'AWAKE'
+        instr_count = 0
+        processTime = 1
         def __init__(self, coreID, clk, ctrCache):
             self.ID = coreID
             self.clock = clk
-            self.processTime = 1
             self.ctrCache = ctrCache
             self.standby = threading.Condition()
             self.ctrCache.add_pause(self.standby)
@@ -30,6 +32,7 @@ class core:
                 if(count != self.clock.countCicle ):
                     count = self.clock.countCicle
                     instr = core.generateInstruction()
+                    self.instr_count += 1
                     command = """### NEW INSTRUCTION ###\n\tCORE ID:    {}\n\tTYPE:\t{}"""\
                     .format(self.ID, instr)
                     if(instr in ['read', 'write']):
@@ -55,10 +58,28 @@ class core:
         self.ID = coreID
         self.myBus = bus
         self.myCache = cache.cache()
-        self.controller = cacheController.controller(self.myCache, self.myBus)
+        self.controller = cacheController.controller(self.myCache, self.myBus, self.change_state)
         self.myBus.add_ctrl(self.controller)
         self.processor = core.processor(coreID, clock, self.controller)
         self.processor.start()
+
+    def change_state(self, state):
+        self.state = state
+
+    def get_rates(self):
+        total = self.processor.instr_count
+        missRate, hitRate, mem = 0,0,0
+        if(total>0):
+            miss_count = self.controller.missRate
+            hit_count = self.controller.hitRate
+            missRate = (miss_count/total)*100
+            hitRate = (hit_count/total)*100
+            mem = ((hit_count+miss_count)/total)*100
+
+        return [missRate, hitRate, mem, total]
+
     @staticmethod
     def generateInstruction():
+        ### Funcion con distribucion especial
+
             return core.isa[random.randrange(3)] ### SHOULD BE 3

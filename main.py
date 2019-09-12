@@ -5,12 +5,18 @@ import memory
 from time import sleep
 
 def printCore(intel):
+    miss, hit, mem, total = intel.get_rates()
+    
     about = """ Core Info
     ID: {}
     STATE: {}
+    Miss Rate: {}%
+    Hit Rate: {}%
+    Memory Access: {}%
+    Total: {}
     Cache Info
 \t|dir\t|tag\t|valid bit\t|data\t|"""\
-    .format(intel.ID, intel.processor.state)
+    .format(intel.ID, intel.state, round(miss,4), round(hit,4), round(mem,4), total)
     
     print(about)
     for key in intel.myCache.datos:
@@ -48,10 +54,10 @@ def simulation():
     dataBus = connexion.bus(mem)
     clk = clock.clock()
     cores = []
-    core1 = core.core('id1',dataBus,clk)
-    core2 = core.core('id2',dataBus,clk)
-    cores.append(core1)
-    cores.append(core2)
+    for i in range(4):
+        id='id'+str(i+1)
+        cores.append(core.core(id,dataBus,clk))
+        
     clk.start()
     logging = True
     if(logging):
