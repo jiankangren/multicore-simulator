@@ -4,11 +4,13 @@ class controller:
     missRate = 0
     thread_pause = None
     
-    def __init__(self, _cache, _bus, _state):
+    def __init__(self, _cache, _bus, _state, update, coreID):
         self.cache = _cache
         self.cachesize = _cache.size
         self.bus = _bus
         self.core_state = _state
+        self.ID = coreID
+        self.update_view = update
     
     def map_dir(self,dir):
         ### Find the tag and cache address
@@ -68,6 +70,7 @@ class controller:
             print("HIT READ")
             self.hitRate += 1
         
+        self.update_view(self.ID,'rates')
         return self.cache.read(cachedir)
 
 
@@ -77,9 +80,9 @@ class controller:
         cacheTag = self.cache.get_tag(cachedir)
         validbit = self.cache.get_valid(cachedir)
         ### 
-        print("WRITE OPERATION")
-        print("CACHE DIR:{} TAG:{}".format(cachedir, tag))
-        print("CACHE TAG:{} VALID BIT:{}".format(cacheTag, validbit))
+        # print("WRITE OPERATION")
+        # print("CACHE DIR:{} TAG:{}".format(cachedir, tag))
+        # print("CACHE TAG:{} VALID BIT:{}".format(cacheTag, validbit))
         
         hit = True
         if(validbit == 'modified'):
@@ -96,11 +99,13 @@ class controller:
             self.hitRate += 1
         else:
             self.missRate += 1
+
+        self.update_view(self.ID,'rate')        
         ### SAVE DATA IN CACHE 
         self.cache.write(cachedir,'modified',tag,data)
         ### NOTIFY THE OTHERS CORES
         self.bus.notify(dir)
-
+        
         return
 
     def notify_write(self):

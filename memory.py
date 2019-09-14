@@ -21,12 +21,14 @@ class memory:
         }
     size = 16
 
-    def __init__(self):
+    def __init__(self, update):
         self.delayTime = 3
+        self.update = update
 
     def write(self, dir, newData):
         sleep(self.delayTime)
         self.data[dir] = newData
+        self.update(self)
         return
 
     def read(self, dir):

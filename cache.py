@@ -2,7 +2,9 @@ from time import sleep
 
 class cache:
     size = 8
-    def __init__(self):
+    def __init__(self, IDcore, update):
+        self.update = update
+        self.coreID = IDcore
         self.datos = {
         ### dir: [valid bit, tag, data]
             0x0:['invalid',0,'0'],#
@@ -24,6 +26,7 @@ class cache:
 
     def write(self, dir, state, tag, data):
         sleep(self.delayTime)
+        self.update(self.coreID, 'cache')
         self.datos[dir] = [state, tag, data]
     
     def get_valid(self, dir):
@@ -34,6 +37,7 @@ class cache:
 
     def change_state(self, dir, state):
         self.datos[dir][0] = state
+        self.update(self.coreID, 'cache')
 
     def directions(self):
         return self.datos.keys()

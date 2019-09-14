@@ -2,15 +2,10 @@ from tkinter import *
 from tkinter import ttk
 import time
 import tkinter.scrolledtext as tkscrolled
-
-import core
-import connexion
-import memory
-
+from main import simulation
 
 class core_gui:
-    def __init__(self, parent, core, color, position):
-        self.core = core
+    def __init__(self, parent, color, position, ID):
         self.space = parent
         self.color = color
         self.Cprocessor = Canvas(parent, width=250, height=110, bg = "light "+color)
@@ -21,30 +16,33 @@ class core_gui:
         self.Clog.place(x=x,y=y+115)
         self.Ccache.place(x=x, y=y+190)
         self.set_cache()
-        self.set_core()
+        self.set_core(ID)
         self.set_log()
 
     def set_log(self):
         self.log = Text(self.Clog, font=('Agency FB',8))
         self.log.place(x=5, y=5, width=240, height=60)
 
-    def set_core(self):
+
+    def set_core(self,ID):
         self.Cprocessor.create_rectangle(1,1,250,110, width = 10, outline=self.color)#'grey')#
         self.core_info = {}
-        miss = StringVar(value="99%")
-        hit = StringVar(value="1%")
-        mem = StringVar(value="5%")
-        total = StringVar(value="20")
-        state = StringVar(value="Sleep")
+        self.log = True
+        miss = StringVar()
+        hit = StringVar()
+        mem = StringVar()
+        total = StringVar()
+        state = StringVar()
     
         self.core_info['miss']=miss
         self.core_info['hit']=hit
         self.core_info['mem']=mem
         self.core_info['total']=total
         self.core_info['state']=state
+        self.core_info['log']=self.log
         
         
-        L_id = Label(self.Cprocessor, font=('Agency FB',8), text = "Core: "+("ID1"), bg = "white", borderwidth=1, relief="groove")
+        L_id = Label(self.Cprocessor, font=('Agency FB',8), text = "Core: ID"+str(ID), bg = "white", borderwidth=1, relief="groove")
         L_miss = Label(self.Cprocessor, font=('Agency FB',8), text = "Miss Rate:", bg = "white", borderwidth=1, relief="sunken")
         L_hit = Label(self.Cprocessor, font=('Agency FB',8), text = "Hit Rate:", bg = "white", borderwidth=1, relief="sunken")
         L_total = Label(self.Cprocessor, font=('Agency FB',8), text = "Local Total:", bg = "white", borderwidth=1, relief="sunken")
@@ -58,33 +56,38 @@ class core_gui:
         ancho = 75
         ancho2 = 40
         L_miss.place(x=x, y=y, width = ancho)
-        temp = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=miss, state='readonly')
-        temp.place(x=x+ancho, y=y, width=ancho2)
+        E_miss = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=miss, state='readonly')
+        E_miss.place(x=x+ancho, y=y, width=ancho2)
+        
         y+=16
         L_hit.place(x=x, y=y, width = ancho)
-        temp = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=hit, state='readonly')
-        temp.place(x=x+ancho, y=y, width=ancho2)
+        E_hit = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=hit, state='readonly')
+        E_hit.place(x=x+ancho, y=y, width=ancho2)
+        
         y+=16
         L_mem.place(x=x, y=y, width = ancho)
-        temp = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=mem, state='readonly')
-        temp.place(x=x+ancho, y=y, width=ancho2)
+        E_mem = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=mem, state='readonly')
+        E_mem.place(x=x+ancho, y=y, width=ancho2)
+        
         y+=16
         L_total.place(x=x, y=y, width = ancho)
-        temp = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=total, state='readonly')
-        temp.place(x=x+ancho, y=y, width=ancho2)
+        E_total = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=total, state='readonly')
+        E_total.place(x=x+ancho, y=y, width=ancho2)
         x,y = 132, 28
         L_state.place(x=x,y=y,width=110)
+        
         y+=16
         x2=x+110-ancho2-5
-        temp = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=state, state='readonly')
-        temp.place(x=x2, y=y, width = ancho2+5)
+        E_state = Entry(self.Cprocessor, font=('Agency FB',8), textvariable=state, state='readonly')
+        E_state.place(x=x2, y=y, width = ancho2+5)
         y+=16
-        btn_log = Button(self.Cprocessor,text="LOG", command = self.log, bg = self.color, fg = 'light grey', font=('Agency FB',8))
+        btn_log = Button(self.Cprocessor,text="LOG", command = self.toggle_log, bg = self.color, fg = 'light grey', font=('Agency FB',8))
         btn_log.place(x=x+10,y=y)
     
-    def log(self):
-        pass
-
+    def toggle_log(self):
+        self.log = not self.log
+        self.core_info['log']=self.log
+        
 
     def set_cache(self):
         y = 23
@@ -102,18 +105,20 @@ class core_gui:
         for i in range(1,9):
             x = 3
             line_info = {}
-
-            dire = StringVar(value='0x10')
-            tag = StringVar(value='0')
-            valid = StringVar(value='invalid')
-            data = StringVar(value='0') 
             
-            line_info['dir'] = dire
+            tag = StringVar()
+            valid = StringVar()
+            data = StringVar() 
+
             line_info['tag'] = tag
             line_info['valid'] = valid
             line_info['data'] = data
-        
-            temp = Entry(self.Ccache, font=('Agency FB',8), textvariable=dire, state='readonly')
+            
+            self.cache_info.append(line_info)
+
+            temp = Entry(self.Ccache, font=('Agency FB',8))
+            temp.insert(END, str(hex(i-1)))
+            temp.configure(state='readonly')
             temp.place(x=x, y=y, width=60)
             x+=62
             temp = Entry(self.Ccache, font=('Agency FB',8), textvariable=tag, state='readonly')
@@ -124,32 +129,34 @@ class core_gui:
             x+=62
             temp = Entry(self.Ccache, font=('Agency FB',8), textvariable=data, state='readonly')
             temp.place(x=x, y=y, width=60)
-            
-
             y+=15
+
+    def get_vars(self):
+        return self.core_info, self.cache_info
+
             
 class bus_gui:
-    def __init__(self, parent, bus, position):
+    def __init__(self, parent, position):
         self.Cbus = Canvas(parent, bg ='snow', width = 768, height = 30) #width = 1024 * 3/4
         x,y=position
         self.Cbus.place(x=x, y=y)
-        self.dir = StringVar(value = bus.dir)
-        self.data = StringVar(value = bus.data)
+        self.dir = StringVar()
+        self.data = StringVar()
         
         L_dir = Label(self.Cbus, font=('Agency FB',10), text = "Current DIR on the bus:", bg='white', borderwidth=1, relief="sunken")
         L_dir.place(x=100,y=5, width=175)
         
-        temp = Entry(self.Cbus, font=('Agency FB',10), textvariable=self.dir, state='readonly')
-        temp.place(x= 280, y=5, width=60)
-        
         L_data = Label(self.Cbus, font=('Agency FB',10), text = "Current DATA on the bus:", bg='white', borderwidth=1, relief="sunken")
         L_data.place(x=350,y=5, width=175)
         
-        temp = Entry(self.Cbus, font=('Agency FB',10), textvariable=self.dir, state='readonly')
-        temp.place(x= 530, y=5, width=60)
+        E_dir = Entry(self.Cbus, font=('Agency FB',10), textvariable=self.dir, state='readonly')
+        E_dir.place(x= 280, y=5, width=60)
+        
+        E_data = Entry(self.Cbus, font=('Agency FB',10), textvariable=self.data, state='readonly')
+        E_data.place(x= 530, y=5, width=60)
 
 class memory_gui:
-    def __init__(self, parent, memory, position ):
+    def __init__(self, parent, position ):
         self.Cmemory = Canvas(parent, bg = 'light yellow', width = 890, height = 70)
         x,y=position
         self.Cmemory.place(x=x,y=y)
@@ -176,76 +183,105 @@ class memory_gui:
         # L_data.place(x=5,y=45, width = 50)
         
         
+class main_view:
+    general = {}
+    mem_dic = {}
+    bus_dic = {}
+    core_dic_list = []
+    cache_dic_list = []
+    
+    def __init__(self, simulation):
+        self.simulation = simulation
+        self.root = Tk()
+
+        self.root.title('Arquitectura de Computadores 2, Proyecto Programado 1')
+        self.root.minsize(1024,600)
+        self.root.resizable(width=NO,height=NO)
+
+        C_root = Canvas(self.root,bg='white')
+        C_root.pack(fill=BOTH, expand=1)
+        x, y = 4,460
+        bus = bus_gui(C_root, (x+128,y))
+        self.bus_dic['dir'] = bus.dir
+        self.bus_dic['data'] =  bus.data
+
+        y += 50
+        mem = memory_gui(C_root, (x+60,y))
+        self.mem_dic = mem.data
+
+        x, y = 4,100
+        for color in ('blue', 'green', 'cyan', 'salmon'):
+            new = core_gui(C_root, color, (x,y), len(self.core_dic_list))
+            core_vars, cache_vars = new.get_vars()
+            self.core_dic_list.append(core_vars)
+            self.cache_dic_list.append(cache_vars)
+            x += 250
+
+        x=300
+        L_temp = Label(C_root, font=('Agency FB',10), text = "Frequency:", bg='white', borderwidth=1, relief="sunken")
+        L_temp.place(x=x,y=50)
+
+        x+=77
+        temp = Entry(C_root, font=('Agency FB',10))
+        temp.insert(END,"{}Hz".format(1/1))
+        temp.configure(state='readonly')
+        temp.place(x=x,y=50, width = 50)
+
+        x+=55
+        L_temp = Label(C_root, font=('Agency FB',10), text = "Cicles Count:", bg='white', borderwidth=1, relief="sunken")
+        L_temp.place(x=x,y=50)
+
+        x+=90
+        cicles = StringVar()
+        self.general['cicles']= cicles
+        temp = Entry(C_root, font=('Agency FB',10), state='readonly', textvariable = cicles)
+        temp.place(x=x,y=50, width = 50)
+
+        x+=55
+        L_freq = Label(C_root, font=('Agency FB',10), text = "Total Instructions:", bg='white', borderwidth=1, relief="sunken")
+        L_freq.place(x=x,y=50)
+
+        x+=122
+        total = StringVar()
+        self.general['total'] = total
+        temp = Entry(C_root, font=('Agency FB',10), state='readonly', textvariable = total)
+        temp.place(x=x,y=50, width = 50)
+
+        x=10 
+        Btn_start = Button(C_root,text='START',command=self.start,fg='black',bg='yellow', font=('Agency FB',12))
+        Btn_start.place(x=x,y=50)
+
+        x=+100
+        Btn_play = Button(C_root,text='PLAY',command=self.play,fg='black',bg='yellow', font=('Agency FB',12))
+        Btn_play.place(x=x,y=50)
+
+        x+=75 
+        Btn_play = Button(C_root,text='PAUSE',command=self.pause,fg='black',bg='yellow', font=('Agency FB',12))
+        Btn_play.place(x=x,y=50)
+
+        self.simulation.add_dictionaries(self.general, self.core_dic_list, self.cache_dic_list, self.mem_dic, self.bus_dic)
+
+
+    def start(self):
+        self.simulation.start()
+        self.mainloop()
+
+    def play(self):
+        self.simulation.play()
+        self.mainloop()
+
+    def pause(self):
+        self.simulation.pause()
+
+
+    def mainloop(self):
+        self.root.mainloop()
 
 
 
-
-mem = memory.memory()
-dataBus = connexion.bus(mem)
-
-root = Tk()
-
-root.title('Arquitectura de Computadores 2, Proyecto Programado 1')
-root.minsize(1024,600)
-root.resizable(width=NO,height=NO)
-
-C_root = Canvas(root,bg='white')
-C_root.pack(fill=BOTH, expand=1)
-x, y = 4,100
-
-new = core_gui(C_root, None, 'blue', (x,y))
-new = core_gui(C_root, None, 'green', (x+255,y))
-new = core_gui(C_root, None, 'cyan', (x+510,y))
-new = core_gui(C_root, None, 'salmon', (x+765,y))
-y += 360 
-bus = bus_gui(C_root, dataBus, (x+128,y))
-y += 50
-mem = memory_gui(C_root, mem, (x+60,y))
+sim = simulation()
+view = main_view(sim)
+view.mainloop()
 
 
-x=300
-L_temp = Label(C_root, font=('Agency FB',10), text = "Frequency:", bg='white', borderwidth=1, relief="sunken")
-L_temp.place(x=x,y=50)
 
-x+=100
-temp = Entry(C_root, font=('Agency FB',10))
-temp.insert(END,"{}Hz".format(1/1))
-temp.configure(state='readonly')
-temp.place(x=x,y=50, width = 50)
-
-x+=55
-L_temp = Label(C_root, font=('Agency FB',10), text = "Cicles Count:", bg='white', borderwidth=1, relief="sunken")
-L_temp.place(x=x,y=50)
-
-x+=100
-cicles = StringVar()
-temp = Entry(C_root, font=('Agency FB',10), state='readonly', textvariable = cicles)
-temp.place(x=x,y=50, width = 50)
-
-x+=55
-L_freq = Label(C_root, font=('Agency FB',10), text = "Total Instructions:", bg='white', borderwidth=1, relief="sunken")
-L_freq.place(x=x,y=50)
-
-x+=100
-total = StringVar()
-temp = Entry(C_root, font=('Agency FB',10), state='readonly', textvariable = total)
-temp.place(x=x,y=50, width = 50)
-
-def update(data, obj):
-    pass
-
-def start():
-    pass
-
-def pause():
-    pass
-
-x=50 
-Btn_play = Button(C_root,text='PLAY',command=start,fg='black',bg='yellow', font=('Agency FB',12))
-Btn_play.place(x=x,y=50)
-
-x+=100 
-Btn_play = Button(C_root,text='PAUSE',command=pause,fg='black',bg='yellow', font=('Agency FB',12))
-Btn_play.place(x=x,y=50)
-
-root.mainloop()

@@ -10,10 +10,14 @@ class bus:
         priorityQ = queue.Queue()
         cacheCtrl_array = []
 
-        def __init__(self, mem):
+        def __init__(self, mem, update):
             self.memory = mem
-            p = threading.Thread(target=self.operations)
-            p.start()
+            self.update = update
+            self.p = threading.Thread(target=self.operations)
+        
+        def start(self):
+            self.p.start()
+
         ### PUT WRITE OP IN QUEUE
         def request_write(self, condition, dir, data):
             req = (condition, self.read_mem,[dir, data])
@@ -66,7 +70,9 @@ class bus:
                         condi, fn, args = self.requestQ.get()
                         with condi:
                             fn(*args)
+                            self.update(self)
                             condi.notify()
+                            
                             
                     else:
                         ### IF there is no READ/WRITE OPERATION
@@ -75,11 +81,12 @@ class bus:
                     #print("QUEUE PRIORITY MEMORY OPERATIONS SIZE:{}".format(self.priorityQ.qsize()))
                     fn, args = self.priorityQ.get()
                     fn(*args)
+                    self.update(self)
                
     instance = None
-    def __init__(self, mem):
+    def __init__(self, mem, update):
         if(not bus.instance):
-            bus.instance = bus.__bus(mem)
+            bus.instance = bus.__bus(mem, update)
     
     def __getattr__(self, name):
         return getattr(self.instance, name)
