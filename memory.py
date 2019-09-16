@@ -2,27 +2,27 @@ from time import sleep
 
 class memory:
     data = {
-        0x0:'0',#
-        0x1:'0',#
-        0x2:'0',#
-        0x3:'0',#
-        0x4:'0',#
-        0x5:'0',#
-        0x6:'0',#
-        0x7:'0',# 
-        0x8:'0',#
-        0x9:'0',#
-        0xA:'0',#
-        0xB:'0',#
-        0xC:'0',#
-        0xD:'0',#
-        0xE:'0',#
-        0xF:'0' #        
+        0x0:'mem',#
+        0x1:'mem',#
+        0x2:'mem',#
+        0x3:'mem',#
+        0x4:'mem',#
+        0x5:'mem',#
+        0x6:'mem',#
+        0x7:'mem',# 
+        0x8:'mem',#
+        0x9:'mem',#
+        0xA:'mem',#
+        0xB:'mem',#
+        0xC:'mem',#
+        0xD:'mem',#
+        0xE:'mem',#
+        0xF:'mem' #        
         }
     size = 16
 
     def __init__(self, update):
-        self.delayTime = 3
+        self.delayTime = 4
         self.update = update
 
     def write(self, dir, newData):

@@ -30,18 +30,17 @@ class core:
        
 
         def run(self):
-            count = self.clock.countCicle
             while(True):
-                if(count != self.clock.countCicle ):
-                    count = self.clock.countCicle
+                if( self.clock.play ):
+                    
                     instr = core.generateInstruction()
                     self.instr_count += 1
-                    # command = """### NEW INSTRUCTION ###\n\tCORE ID:    {}\n\tTYPE:\t{}"""\
-                    # .format(self.ID, instr)
+                    command = "$ Cicle:{} Intruction:{}->\n >>> {} ".format(self.clock.countCicle, self.instr_count,instr)
                     if(instr in ['read', 'write']):
                         dir = random.randrange(16)
-                        # command+="\n\tDIR:\t{}".format(dir)
-                        # print(command)
+                        command+="DIR:{} DATA:ID{}\n".format(dir,self.ID)
+                        self.update(self.ID, 'log', log=command)
+
                         if (instr == 'read'):
                             self.ctrCache.read(dir)
 
@@ -49,9 +48,10 @@ class core:
                             self.ctrCache.write(dir, "ID{}".format(self.ID))        
 
                     elif (instr == 'process'):
-                        # print(command)
+                        command+="\n"
+                        self.update(self.ID, 'log', log=command)
                         self.process()
-                        
+
                 
                 else:
                     sleep(0.5)

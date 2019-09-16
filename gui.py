@@ -18,14 +18,24 @@ class core_gui:
         self.set_cache()
         self.set_core(ID)
         self.set_log()
+    
+    def change_color_state(self, state):
+        color  = 'grey' 
+        if(state == 'AWAKE'):
+            color = self.color
+        self.Cprocessor.itemconfig(self.edge, outline = color)
 
     def set_log(self):
-        self.log = Text(self.Clog, font=('Agency FB',8))
+        self.log = tkscrolled.ScrolledText(self.Clog, font=('Agency FB',8))
         self.log.place(x=5, y=5, width=240, height=60)
+
+    def add_log(self,new_log):
+        self.log.insert(END,new_log)
+        self.log.see("end")
 
 
     def set_core(self,ID):
-        self.Cprocessor.create_rectangle(1,1,250,110, width = 10, outline=self.color)#'grey')#
+        self.edge = self.Cprocessor.create_rectangle(1,1,250,110, width = 10, outline=self.color)#'grey')#
         self.core_info = {}
         self.log = True
         miss = StringVar()
@@ -39,7 +49,8 @@ class core_gui:
         self.core_info['mem']=mem
         self.core_info['total']=total
         self.core_info['state']=state
-        self.core_info['log']=self.log
+        self.core_info['log_fn']=self.add_log
+        self.core_info['change_color']=self.change_color_state
         
         
         L_id = Label(self.Cprocessor, font=('Agency FB',8), text = "Core: ID"+str(ID), bg = "white", borderwidth=1, relief="groove")
@@ -93,7 +104,7 @@ class core_gui:
         y = 23
         L_dire = Label(self.Ccache, font=('Agency FB',8), text = "dir", bg = "white", borderwidth=1, relief="sunken")
         L_tag = Label(self.Ccache, font=('Agency FB',8), text = "tag", bg = "white", borderwidth=1, relief="sunken")
-        L_valid = Label(self.Ccache, font=('Agency FB',8), text = "msi", bg = "white", borderwidth=1, relief="sunken")
+        L_valid = Label(self.Ccache, font=('Agency FB',8), text = "mesi", bg = "white", borderwidth=1, relief="sunken")
         L_data = Label(self.Ccache, font=('Agency FB',8), text = "data", bg = "white", borderwidth=1, relief="sunken")
         
         L_dire.place(x = 6, y = 3, width=55)
@@ -173,7 +184,7 @@ class memory_gui:
         for i in range(1,17):
             L_dir = Label(self.Cmemory, font=('Agency FB',8), text = str(hex(i-1)), bg='white', borderwidth=1, relief="sunken")
             L_dir.place(x=5+52*i,y=25, width = 50)
-            str_pos = StringVar(value='0')
+            str_pos = StringVar(value='mem')
             self.data[i-1]=str_pos
             temp = Entry(self.Cmemory, font=('Agency FB',8), textvariable=str_pos, state='readonly')
             temp.place(x=5+52*i,y=45, width = 50)

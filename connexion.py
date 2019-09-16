@@ -20,12 +20,12 @@ class bus:
 
         ### PUT WRITE OP IN QUEUE
         def request_write(self, condition, dir, data):
-            req = (condition, self.read_mem,[dir, data])
+            req = (condition, self.read_mem,[dir, data], 0)
             self.requestQ.put(req)
 
         ### PUT READ OP IN QUEUE
-        def request_read(self, condition, dir):
-            req = (condition, self.read_data, [dir])
+        def request_read(self, condition, dir, id):
+            req = (condition, self.read_data, [dir, id], 1)
             self.requestQ.put(req)
 
         ### PUT WRITE OP IN PRIORITY QUEUE
@@ -34,29 +34,45 @@ class bus:
             self.priorityQ.put(p_req)
 
 
-        def read_data(self, dir):
+        def read_data(self, dir, id):
             ### ASK CORES FOR DATA
-            dataMem = True
+            inCache = False
             for ctrl in self.cacheCtrl_array:
-                if(ctrl.notify_read()):
-                    dataMem = False
+                inCache = ctrl.notify_read(id, dir)
+                if(inCache):
                     break
-            
+                    
             ### IF CORES DON'T HAVE IT CALL MEMORY
-            if(dataMem):
+            if(not inCache):
                 self.read_mem(dir)
+        
+
+        def set_data(self, data, id):
+            #print("change data from {}".format(id))
+            self.data = data
+            self.update(self)
+
+        def get_data(self):
+            return self.data
+
+        def set_dire(self, dir):
+            self.dir = dir
+            self.update(self)
+        
+        def get_dir(self):
+            return self.dir
 
         def add_ctrl(self, core):
             self.cacheCtrl_array.append(core)
 
         def read_mem(self, dir):
             self.dir = dir
-            self.data = self.memory.read(dir)
+            self.set_data(self.memory.read(dir), "Mem")
         
-        def notify(self, dir):
-            self.dir = dir
+        def notify_cores(self, dir, id):
             for ctrl in self.cacheCtrl_array:
-                ctrl.notify_write()
+                self.dir_miss = dir
+                ctrl.notify_write(dir,  id)
 
         def write_mem(self, dir, data):
             self.dir = dir
@@ -67,13 +83,14 @@ class bus:
                 if(self.priorityQ.empty()):
                     if(not self.requestQ.empty()):
                         #print("QUEUE MEMORY OPERATIONS SIZE:{}".format(self.requestQ.qsize()))
-                        condi, fn, args = self.requestQ.get()
+                        condi, fn, args, read = self.requestQ.get()
                         with condi:
                             fn(*args)
                             self.update(self)
                             condi.notify()
-                            
-                            
+                            if(read):
+                                condi.wait()
+                                
                     else:
                         ### IF there is no READ/WRITE OPERATION
                         sleep(0.5)

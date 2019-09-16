@@ -4,54 +4,10 @@ import clock
 import memory
 from time import sleep
 
-def printCore(intel):
-    miss, hit, mem, total = intel.get_rates()
-    
-    about = """ Core Info
-    ID: {}
-    STATE: {}
-    Miss Rate: {}%
-    Hit Rate: {}%
-    Memory Access: {}%
-    Total: {}
-    Cache Info
-\t|dir\t|tag\t|valid bit\t|data\t|"""\
-    .format(intel.ID, intel.state, round(miss,4), round(hit,4), round(mem,4), total)
-    
-    print(about)
-    for key in intel.myCache.datos:
-        data = intel.myCache.datos[key]
-        print("\t|{}\t|{}\t|{}\t|{}\t|".format(hex(key),data[1],data[0],data[2]))
-
-def printBus(bus):
-    about = """Bus Info
-    DIR: {}
-    DATA: {}
-    """.format(bus.dir, bus.data)
-    print(about)
-
-def printMem(memory):
-    dir = [*memory.data]
-    dir.sort()
-    str_dir = ""
-    str_data = ""
-    for i in dir:
-        str_dir += "|"+str(hex(i))+"\t"
-        str_data += "|"+memory.data[i]+"\t"
-    
-    str_dir += "|"
-    str_data += "|"
-    
-    about = """Memory Info
-    DIR:  {}
-    DATA: {}
-    """.format(str_dir, str_data)
-    print(about)
-
-
 class simulation:
 
     def __init__(self):
+        self.log = [[],[],[],[]]
         self.running = False 
         self.mem = memory.memory(self.update_view)
         self.dataBus = connexion.bus(self.mem, self.update_view)
@@ -77,6 +33,11 @@ class simulation:
     def update_state(self, index):
         state = self.cores_list[index].state
         self.cores_vars[index]['state'].set(state)
+        self.cores_vars[index]['change_color'](state)
+        
+    def add_log(self,id, log_entry):
+        fn_log = self.cores_vars[id]['log_fn']
+        fn_log(log_entry)
 
     def update_view(self, obj):
         objType = obj.__class__.__name__
@@ -86,14 +47,16 @@ class simulation:
         elif (objType == 'memory'):
             self.update_mem(obj)
     
-    def update_core(self, id, tipo):
+    def update_core(self, id, tipo, log = ''):
         if(tipo == 'rates'):
             self.update_rates(id)
         elif (tipo == 'state'):
             self.update_state(id)
         elif(tipo == 'cache'):
             self.update_cache(id)
-
+        elif(tipo == 'log'):
+            self.add_log(id, log)
+            
     
 
     def update_cache(self, index):
@@ -107,7 +70,7 @@ class simulation:
     def update_rates(self, index):
         intel = self.cores_list[index]
         core_dict = self.cores_vars[index]
-        print(self.cores_vars[index].keys())
+      
         miss, hit, mem, total = intel.get_rates()
         self.local_total_list[index] = total
         sum = 0
@@ -116,9 +79,9 @@ class simulation:
         self.general_vars['total'].set(str(sum))
 
         core_dict['state'].set(intel.state)
-        core_dict['miss'].set(str(round(miss,4)))
-        core_dict['hit'].set(str(round(hit,4)))
-        core_dict['mem'].set(str(round(mem,4)))
+        core_dict['miss'].set(str(round(miss,2)))
+        core_dict['hit'].set(str(round(hit,2)))
+        core_dict['mem'].set(str(round(mem,2)))
         core_dict['total'].set(str(total))
         # if(core_dict['log'] != intel.log):
         #     intel.log = core_dict['log']
@@ -126,7 +89,7 @@ class simulation:
     
     def update_bus(self, bus):
         self.bus_vars['data'].set(bus.data)
-        self.bus_vars['dir'].set(str(bus.dir))
+        self.bus_vars['dir'].set(str(hex(bus.get_dir())))
 
     def update_mem(self, mem):
         for dir in mem.data:
@@ -135,7 +98,6 @@ class simulation:
 
     def start(self):
         if(not self.running):
-            print("start simulation")
             self.running = True
             self.clk.start()
             self.dataBus.start()
@@ -148,33 +110,3 @@ class simulation:
     
     def play(self):
         self.clk.go()
-
-
-
-#     mem = memory.memory()
-#     dataBus = connexion.bus(mem)
-#     clk = clock.clock()
-#     cores = []
-#     for i in range(4):
-#         id='id'+str(i+1)
-#         cores.append(core.core(id,dataBus,clk))
-        
-#     clk.start()
-#     logging = True
-#     if(logging):
-#         print("Logging.... ")    
-#         count = 0
-#         while(True):
-#             if(clk.countCicle != count):
-#                 count = clk.countCicle
-#                 for i in cores:
-#                     printCore(i)
-                
-#                 printBus(dataBus)
-#                 printMem(mem)
-            
-#             else:
-#                 sleep(0.5)
-
-        
-# simulation()       
